@@ -86,6 +86,9 @@
 
         // Snap to nearest edge (Left or Right)
         CGRect bounds = superview.safeAreaLayoutGuide.layoutFrame;
+        if (bounds.size.width <= 0 || bounds.size.height <= 0) {
+            bounds = superview.bounds;
+        }
         CGFloat halfWidth = self.bounds.size.width / 2.0;
         CGFloat halfHeight = self.bounds.size.height / 2.0;
 
@@ -147,6 +150,14 @@
     BOOL _isOpen;
 }
 
+- (UIView *)mainCard {
+    return _mainCard;
+}
+
+- (BOOL)isOpen {
+    return _isOpen;
+}
+
 - (void)viewDidLoad {
     [super viewDidLoad];
     self.view.backgroundColor = [UIColor clearColor];
@@ -155,13 +166,39 @@
     [self setupMainInterface];
 }
 
+- (void)viewDidLayoutSubviews {
+    [super viewDidLayoutSubviews];
+    CGFloat screenW = self.view.bounds.size.width;
+    CGFloat screenH = self.view.bounds.size.height;
+    if (screenW <= 0 || screenH <= 0) return;
+
+    if (_mainCard) {
+        _mainCard.center = CGPointMake(screenW / 2.0, screenH / 2.0);
+    }
+
+    if (self.floatingButton) {
+        CGFloat halfW = self.floatingButton.bounds.size.width / 2.0;
+        CGFloat halfH = self.floatingButton.bounds.size.height / 2.0;
+        CGPoint c = self.floatingButton.center;
+        c.x = MIN(MAX(c.x, halfW + 8.0), screenW - halfW - 8.0);
+        c.y = MIN(MAX(c.y, halfH + 8.0), screenH - halfH - 8.0);
+        self.floatingButton.center = c;
+    }
+}
+
 - (void)setupMainInterface {
     CGFloat screenW = [UIScreen mainScreen].bounds.size.width;
     CGFloat screenH = [UIScreen mainScreen].bounds.size.height;
 
     // Center Card dimensions (responsive for iPhone & iPad)
-    CGFloat cardW = MIN(screenW * 0.90, 520.0);
-    CGFloat cardH = MIN(screenH * 0.75, 420.0);
+    CGFloat cardW = MIN(MAX(screenW, screenH) * 0.85, 500.0);
+    if (cardW > MIN(screenW, screenH) - 20.0) {
+        cardW = MIN(screenW, screenH) - 20.0;
+    }
+    CGFloat cardH = MIN(MAX(screenW, screenH) * 0.70, 380.0);
+    if (cardH > MIN(screenW, screenH) - 40.0) {
+        cardH = MIN(screenW, screenH) - 40.0;
+    }
 
     _mainCard = [[UIView alloc] initWithFrame:CGRectMake((screenW - cardW)/2.0, (screenH - cardH)/2.0, cardW, cardH)];
     _mainCard.layer.cornerRadius = 16.0;
@@ -169,6 +206,7 @@
     _mainCard.layer.borderColor = [UIColor colorWithRed:0.25 green:0.25 blue:0.40 alpha:0.6].CGColor;
     _mainCard.layer.borderWidth = 1.0;
     _mainCard.alpha = 0.0;
+    _mainCard.hidden = YES;
     _mainCard.transform = CGAffineTransformMakeScale(0.85, 0.85);
 
     // Dark Frosted Glass Blur
@@ -205,7 +243,7 @@
     [_headerView addSubview:_titleLabel];
 
     // Status Badge
-    _statusBadge = [[UILabel alloc] initWithFrame:CGRectMake(180, 14, 110, 20)];
+    _statusBadge = [[UILabel alloc] initWithFrame:CGRectMake(150, 14, 110, 20)];
     _statusBadge.text = @"• Connected";
     _statusBadge.font = [UIFont systemFontOfSize:11 weight:UIFontWeightMedium];
     _statusBadge.textColor = [UIColor colorWithRed:0.2 green:0.9 blue:0.5 alpha:1.0];
@@ -250,7 +288,7 @@
 
     CGFloat w = frame.size.width;
     CGFloat h = frame.size.height;
-    CGFloat barH = 40.0;
+    CGFloat barH = 38.0;
 
     // Code Text Editor
     _codeTextView = [[UITextView alloc] initWithFrame:CGRectMake(0, 0, w, h - barH - 8)];
@@ -317,7 +355,7 @@
         [card addSubview:descLabel];
 
         UIButton *runBtn = [UIButton buttonWithType:UIButtonTypeCustom];
-        runBtn.frame = CGRectMake(frame.size.width - 90, 16, 78, 36);
+        runBtn.frame = CGRectMake(frame.size.width - 86, 16, 74, 36);
         runBtn.backgroundColor = [UIColor colorWithRed:0.25 green:0.18 blue:0.80 alpha:0.9];
         runBtn.layer.cornerRadius = 6.0;
         [runBtn setTitle:@"Run" forState:UIControlStateNormal];
@@ -325,8 +363,13 @@
         [runBtn setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
 
         NSString *srcCode = item[@"src"];
+        NSString *scriptName = item[@"name"];
+        __weak LuxinaExecutorViewController *weakSelf = self;
         [runBtn addAction:[UIAction actionWithHandler:^(__kindof UIAction * _Nonnull action) {
-            [self logToConsole:[NSString stringWithFormat:@"Executing %@", item[@"name"]] isError:NO];
+            LuxinaExecutorViewController *strongSelf = weakSelf;
+            if (strongSelf) {
+                [strongSelf logToConsole:[NSString stringWithFormat:@"Executing %@", scriptName] isError:NO];
+            }
             Luxina::Core::ExecuteScript([srcCode UTF8String]);
         }] forControlEvents:UIControlEventTouchUpInside];
 
@@ -386,7 +429,7 @@
     [_settingsTabContainer addSubview:fpsSwitch];
 
     // Info Label
-    UILabel *infoLbl = [[UILabel alloc] initWithFrame:CGRectMake(8, 100, frame.size.width - 16, 80)];
+    UILabel *infoLbl = [[UILabel alloc] initWithFrame:CGRectMake(8, 90, frame.size.width - 16, 80)];
     infoLbl.numberOfLines = 0;
     infoLbl.text = @"luxinaios Engine v1.0.0\nTarget Build: 2.748.1526\nLuau VM: Elevated Security Level 8\nCapabilities: 0x3FFFFFFF";
     infoLbl.textColor = [UIColor colorWithWhite:0.6 alpha:1.0];
@@ -454,6 +497,7 @@
 - (void)toggleVisibility {
     _isOpen = !_isOpen;
     if (_isOpen) {
+        _mainCard.hidden = NO;
         _mainCard.alpha = 0.0;
         _mainCard.transform = CGAffineTransformMakeScale(0.85, 0.85);
         [UIView animateWithDuration:0.3 delay:0 usingSpringWithDamping:0.8 initialSpringVelocity:0.4 options:UIViewAnimationOptionCurveEaseOut animations:^{
@@ -461,10 +505,15 @@
             self->_mainCard.transform = CGAffineTransformIdentity;
         } completion:nil];
     } else {
+        [self.view endEditing:YES];
         [UIView animateWithDuration:0.2 delay:0 options:UIViewAnimationOptionCurveEaseIn animations:^{
             self->_mainCard.alpha = 0.0;
             self->_mainCard.transform = CGAffineTransformMakeScale(0.85, 0.85);
-        } completion:nil];
+        } completion:^(BOOL finished) {
+            if (!self->_isOpen) {
+                self->_mainCard.hidden = YES;
+            }
+        }];
     }
 }
 
@@ -482,10 +531,46 @@
 @end
 
 // ============================================================================
+// LuxinaPassthroughWindow Implementation
+// Passes all touches outside the floating button and open card to Roblox!
+// ============================================================================
+@implementation LuxinaPassthroughWindow
+
+- (UIView *)hitTest:(CGPoint)point withEvent:(UIEvent *)event {
+    if (self.hidden || self.alpha <= 0.01 || !self.userInteractionEnabled) {
+        return nil;
+    }
+
+    // 1. Check if touch is inside the floating button
+    if (self.floatingButton && !self.floatingButton.hidden && self.floatingButton.alpha > 0.01) {
+        CGPoint btnPoint = [self convertPoint:point toView:self.floatingButton];
+        if ([self.floatingButton pointInside:btnPoint withEvent:event]) {
+            UIView *hit = [self.floatingButton hitTest:btnPoint withEvent:event];
+            return hit ? hit : self.floatingButton;
+        }
+    }
+
+    // 2. Check if executor card is open and touch is inside mainCard
+    if (self.executorVC && self.executorVC.isOpen && self.executorVC.mainCard && !self.executorVC.mainCard.hidden) {
+        UIView *card = self.executorVC.mainCard;
+        CGPoint cardPoint = [self convertPoint:point toView:card];
+        if ([card pointInside:cardPoint withEvent:event]) {
+            UIView *hit = [card hitTest:cardPoint withEvent:event];
+            return hit ? hit : card;
+        }
+    }
+
+    // 3. Return nil so UIKit forwards the touch to Roblox's underlying window
+    return nil;
+}
+
+@end
+
+// ============================================================================
 // LuxinaUIManager Implementation
 // ============================================================================
 @implementation LuxinaUIManager {
-    UIWindow *_overlayWindow;
+    LuxinaPassthroughWindow *_overlayWindow;
     LuxinaExecutorViewController *_viewController;
     LuxinaFloatingButton *_floatingButton;
 }
@@ -501,48 +586,76 @@
 
 - (void)initializeUI {
     dispatch_async(dispatch_get_main_queue(), ^{
-        if (self->_overlayWindow) return;
-
-        // Create overlay window above game alert level
-        UIWindowScene *scene = nil;
-        for (UIScene *s in [UIApplication sharedApplication].connectedScenes) {
-            if ([s isKindOfClass:[UIWindowScene class]] && s.activationState == UISceneActivationStateForegroundActive) {
-                scene = (UIWindowScene *)s;
-                break;
-            }
-        }
-
-        if (scene) {
-            self->_overlayWindow = [[UIWindow alloc] initWithWindowScene:scene];
-        } else {
-            self->_overlayWindow = [[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
-        }
-
-        self->_overlayWindow.windowLevel = UIWindowLevelAlert + 100.0;
-        self->_overlayWindow.backgroundColor = [UIColor clearColor];
-        self->_overlayWindow.hidden = NO;
-
-        self->_viewController = [[LuxinaExecutorViewController alloc] init];
-        self->_overlayWindow.rootViewController = self->_viewController;
-
-        // Floating draggable button setup (Initial view)
-        CGFloat btnSize = 54.0;
-        CGFloat startX = [UIScreen mainScreen].bounds.size.width - btnSize - 16;
-        CGFloat startY = [UIScreen mainScreen].bounds.size.height * 0.4;
-
-        self->_floatingButton = [[LuxinaFloatingButton alloc] initWithFrame:CGRectMake(startX, startY, btnSize, btnSize)];
-        self->_viewController.floatingButton = self->_floatingButton;
-
-        __weak LuxinaUIManager *weakSelf = self;
-        self->_floatingButton.onTapHandler = ^{
-            LuxinaUIManager *strongSelf = weakSelf;
-            if (strongSelf) {
-                [strongSelf->_viewController toggleVisibility];
-            }
-        };
-
-        [self->_overlayWindow addSubview:self->_floatingButton];
+        [self trySetupWindow];
     });
+}
+
+- (void)trySetupWindow {
+    if (self->_overlayWindow) return;
+
+    // Wait until Roblox's main UIWindowScene and game UIWindow are active and visible
+    UIWindowScene *activeScene = nil;
+    UIWindow *gameWindow = nil;
+
+    for (UIScene *s in [UIApplication sharedApplication].connectedScenes) {
+        if ([s isKindOfClass:[UIWindowScene class]]) {
+            UIWindowScene *ws = (UIWindowScene *)s;
+            if (ws.activationState == UISceneActivationStateForegroundActive ||
+                ws.activationState == UISceneActivationStateForegroundInactive) {
+                for (UIWindow *w in ws.windows) {
+                    if (!w.hidden && w.bounds.size.width > 0) {
+                        activeScene = ws;
+                        gameWindow = w;
+                        break;
+                    }
+                }
+            }
+        }
+        if (activeScene && gameWindow) break;
+    }
+
+    if (!activeScene || !gameWindow) {
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+            [self trySetupWindow];
+        });
+        return;
+    }
+
+    self->_overlayWindow = [[LuxinaPassthroughWindow alloc] initWithWindowScene:activeScene];
+    self->_overlayWindow.frame = [UIScreen mainScreen].bounds;
+    self->_overlayWindow.windowLevel = UIWindowLevelAlert + 100.0;
+    self->_overlayWindow.backgroundColor = [UIColor clearColor];
+
+    self->_viewController = [[LuxinaExecutorViewController alloc] init];
+    self->_overlayWindow.rootViewController = self->_viewController;
+    [self->_viewController loadViewIfNeeded];
+
+    // Floating draggable button setup inside viewController.view
+    CGFloat btnSize = 54.0;
+    CGFloat screenW = self->_viewController.view.bounds.size.width;
+    CGFloat screenH = self->_viewController.view.bounds.size.height;
+    if (screenW <= 0) screenW = [UIScreen mainScreen].bounds.size.width;
+    if (screenH <= 0) screenH = [UIScreen mainScreen].bounds.size.height;
+
+    CGFloat startX = screenW - btnSize - 16.0;
+    CGFloat startY = screenH * 0.4;
+
+    self->_floatingButton = [[LuxinaFloatingButton alloc] initWithFrame:CGRectMake(startX, startY, btnSize, btnSize)];
+    self->_viewController.floatingButton = self->_floatingButton;
+
+    __weak LuxinaUIManager *weakSelf = self;
+    self->_floatingButton.onTapHandler = ^{
+        LuxinaUIManager *strongSelf = weakSelf;
+        if (strongSelf) {
+            [strongSelf->_viewController toggleVisibility];
+        }
+    };
+
+    [self->_viewController.view addSubview:self->_floatingButton];
+
+    self->_overlayWindow.floatingButton = self->_floatingButton;
+    self->_overlayWindow.executorVC = self->_viewController;
+    self->_overlayWindow.hidden = NO;
 }
 
 - (void)appendLog:(const std::string&)text isError:(bool)isError {

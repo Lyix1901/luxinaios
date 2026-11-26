@@ -17,8 +17,18 @@
 @interface LuxinaExecutorViewController : UIViewController <UITextViewDelegate, WKNavigationDelegate>
 
 @property (nonatomic, strong) LuxinaFloatingButton *floatingButton;
+@property (nonatomic, strong, readonly) UIView *mainCard;
+@property (nonatomic, assign, readonly) BOOL isOpen;
+
 - (void)toggleVisibility;
 - (void)logToConsole:(NSString *)message isError:(BOOL)isError;
+
+@end
+
+@interface LuxinaPassthroughWindow : UIWindow
+
+@property (nonatomic, weak) LuxinaFloatingButton *floatingButton;
+@property (nonatomic, weak) LuxinaExecutorViewController *executorVC;
 
 @end
 
