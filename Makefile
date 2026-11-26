@@ -8,7 +8,7 @@ luxinaios_FILES = \
 	src/entry.mm \
 	src/ui/LuxinaUI.mm \
 	src/core/LuxinaCore.cpp \
-	src/env/LuxinaEnv.cpp
+	src/env/LuxinaEnv.mm
 
 luxinaios_CFLAGS = -fobjc-arc -std=c++20 -Isrc -Isrc/ui -Isrc/core -Isrc/env -Isrc/config
 luxinaios_FRAMEWORKS = UIKit Foundation QuartzCore WebKit

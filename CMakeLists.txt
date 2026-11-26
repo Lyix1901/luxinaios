@@ -9,7 +9,7 @@ set(SOURCES
     src/entry.mm
     src/ui/LuxinaUI.mm
     src/core/LuxinaCore.cpp
-    src/env/LuxinaEnv.cpp
+    src/env/LuxinaEnv.mm
 )
 
 set(HEADERS

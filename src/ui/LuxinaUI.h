@@ -1,14 +1,10 @@
 #pragma once
 
-#import <UIKit/UIKit.h>
-#import <WebKit/WebKit.h>
 #include <string>
 
-// Forward declarations
-namespace Luxina::Core {
-    void ExecuteScript(const std::string& script);
-    void SetFPSCap(double fps);
-}
+#ifdef __OBJC__
+#import <UIKit/UIKit.h>
+#import <WebKit/WebKit.h>
 
 @interface LuxinaFloatingButton : UIView
 
@@ -34,3 +30,10 @@ namespace Luxina::Core {
 - (void)updateAttachmentStatus:(bool)attached;
 
 @end
+#endif
+
+namespace Luxina::UI {
+    void Initialize();
+    void AppendLog(const std::string& text, bool isError);
+    void UpdateAttachmentStatus(bool attached);
+}

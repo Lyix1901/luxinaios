@@ -33,7 +33,7 @@ namespace Luxina::Core {
     }
 
     void Log(const std::string& message, bool isError) {
-        [[LuxinaUIManager sharedInstance] appendLog:message isError:isError];
+        Luxina::UI::AppendLog(message, isError);
     }
 
     bool IsAttached() {
@@ -111,7 +111,7 @@ namespace Luxina::Core {
 
         if (Config::g_Runtime.isAttached) {
             Log("[luxinaios] Hooked Luau state successfully. Environment ready.", false);
-            [[LuxinaUIManager sharedInstance] updateAttachmentStatus:true];
+            Luxina::UI::UpdateAttachmentStatus(true);
             Env::RegisterEnvironment(Config::g_Runtime.mainLuaState);
         }
     }
@@ -121,7 +121,7 @@ namespace Luxina::Core {
         g_Initialized = true;
 
         // Initialize UI Layer on main thread
-        [[LuxinaUIManager sharedInstance] initializeUI];
+        Luxina::UI::Initialize();
 
         // Start background scanner thread
         std::thread(ScannerWorker).detach();

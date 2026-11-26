@@ -39,7 +39,7 @@ jobs:
           src/entry.mm \
           src/ui/LuxinaUI.mm \
           src/core/LuxinaCore.cpp \
-          src/env/LuxinaEnv.cpp
+          src/env/LuxinaEnv.mm
         
         echo "luxinaios.dylib build successful:"
         ls -lh build/luxinaios.dylib

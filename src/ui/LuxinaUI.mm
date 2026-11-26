@@ -533,7 +533,7 @@
         self->_floatingButton = [[LuxinaFloatingButton alloc] initWithFrame:CGRectMake(startX, startY, btnSize, btnSize)];
         self->_viewController.floatingButton = self->_floatingButton;
 
-        __weak typeof(self) weakSelf = self;
+        __weak LuxinaUIManager *weakSelf = self;
         self->_floatingButton.onTapHandler = ^{
             [weakSelf->_viewController toggleVisibility];
         };
@@ -552,3 +552,15 @@
 }
 
 @end
+
+namespace Luxina::UI {
+    void Initialize() {
+        [[LuxinaUIManager sharedInstance] initializeUI];
+    }
+    void AppendLog(const std::string& text, bool isError) {
+        [[LuxinaUIManager sharedInstance] appendLog:text isError:isError];
+    }
+    void UpdateAttachmentStatus(bool attached) {
+        [[LuxinaUIManager sharedInstance] updateAttachmentStatus:attached];
+    }
+}
