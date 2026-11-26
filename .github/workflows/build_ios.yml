@@ -9,24 +9,31 @@ on:
 
 jobs:
   build:
-    runs-on: macos-13
+    name: Compile ARM64 iOS Dylib
+    runs-on: ubuntu-latest
 
     steps:
     - name: Checkout Repository
       uses: actions/checkout@v4
 
-    - name: Select Xcode Version
+    - name: Install Clang & LLD
       run: |
-        sudo xcode-select -s /Applications/Xcode_15.0.1.app || sudo xcode-select -s /Applications/Xcode.app
-        xcodebuild -version
-        xcrun --sdk iphoneos --show-sdk-path
+        sudo apt-get update -qq
+        sudo apt-get install -y clang lld llvm
+
+    - name: Download iOS SDK
+      run: |
+        git clone --depth 1 https://github.com/theos/sdks.git $HOME/theos-sdks
+        echo "SDK downloaded successfully."
 
     - name: Compile luxinaios.dylib (ARM64 iOS)
       run: |
         mkdir -p build
-        clang++ -target arm64-apple-ios14.0 -fobjc-arc -shared -std=c++20 \
-          -isysroot $(xcrun --sdk iphoneos --show-sdk-path) \
+        clang++ -target arm64-apple-ios14.0 -shared -fobjc-arc -std=c++20 \
+          -fuse-ld=lld \
+          -isysroot $HOME/theos-sdks/iPhoneOS16.5.sdk \
           -Isrc -Isrc/ui -Isrc/core -Isrc/env -Isrc/config \
+          -F$HOME/theos-sdks/iPhoneOS16.5.sdk/System/Library/Frameworks \
           -framework UIKit -framework Foundation -framework QuartzCore -framework WebKit \
           -o build/luxinaios.dylib \
           src/entry.mm \
@@ -36,7 +43,6 @@ jobs:
         
         echo "luxinaios.dylib build successful:"
         ls -lh build/luxinaios.dylib
-        file build/luxinaios.dylib
 
     - name: Upload Dylib Artifact
       uses: actions/upload-artifact@v4
