@@ -1,0 +1,11 @@
+# Build artifacts
+build/
+*.ipa
+*.o
+*.obj
+*.tmp
+*.zip
+
+# OS files
+.DS_Store
+Thumbs.db
