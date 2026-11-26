@@ -11,7 +11,7 @@ luxinaios_FILES = \
 	src/env/LuxinaEnv.mm
 
 luxinaios_CFLAGS = -fobjc-arc -std=c++20 -Isrc -Isrc/ui -Isrc/core -Isrc/env -Isrc/config
-luxinaios_FRAMEWORKS = UIKit Foundation QuartzCore WebKit
+luxinaios_FRAMEWORKS = UIKit Foundation QuartzCore CoreGraphics WebKit
 
 include $(THEOS)/makefiles/common.mk
 include $(THEOS_MAKE_PATH)/tweak.mk

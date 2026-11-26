@@ -535,7 +535,10 @@
 
         __weak LuxinaUIManager *weakSelf = self;
         self->_floatingButton.onTapHandler = ^{
-            [weakSelf->_viewController toggleVisibility];
+            LuxinaUIManager *strongSelf = weakSelf;
+            if (strongSelf) {
+                [strongSelf->_viewController toggleVisibility];
+            }
         };
 
         [self->_overlayWindow addSubview:self->_floatingButton];

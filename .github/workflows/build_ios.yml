@@ -29,12 +29,16 @@ jobs:
     - name: Compile luxinaios.dylib (ARM64 iOS)
       run: |
         mkdir -p build
+        SDK_PATH="$HOME/theos-sdks/iPhoneOS16.5.sdk"
         clang++ -target arm64-apple-ios14.0 -shared -fobjc-arc -std=c++20 \
           -fuse-ld=lld \
-          -isysroot $HOME/theos-sdks/iPhoneOS16.5.sdk \
+          -isysroot "$SDK_PATH" \
           -Isrc -Isrc/ui -Isrc/core -Isrc/env -Isrc/config \
-          -F$HOME/theos-sdks/iPhoneOS16.5.sdk/System/Library/Frameworks \
-          -framework UIKit -framework Foundation -framework QuartzCore -framework WebKit \
+          -L"$SDK_PATH/usr/lib" \
+          -F"$SDK_PATH/System/Library/Frameworks" \
+          -nodefaultlibs -lc++ -lobjc -lSystem \
+          -framework UIKit -framework Foundation -framework QuartzCore -framework CoreGraphics -framework WebKit \
+          -Wl,-install_name,@executable_path/Frameworks/luxinaios.dylib \
           -o build/luxinaios.dylib \
           src/entry.mm \
           src/ui/LuxinaUI.mm \
@@ -43,6 +47,7 @@ jobs:
         
         echo "luxinaios.dylib build successful:"
         ls -lh build/luxinaios.dylib
+        file build/luxinaios.dylib
 
     - name: Upload Dylib Artifact
       uses: actions/upload-artifact@v4

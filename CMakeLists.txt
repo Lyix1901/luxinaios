@@ -35,6 +35,7 @@ if (APPLE)
         "-framework UIKit"
         "-framework Foundation"
         "-framework QuartzCore"
+        "-framework CoreGraphics"
         "-framework WebKit"
     )
     set_target_properties(luxinaios PROPERTIES
